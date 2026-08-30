@@ -166,6 +166,7 @@ impl PanelSpace {
                 input_region: None,
                 parent: self.layer.as_ref().unwrap().wl_surface().clone(),
                 grab: true,
+                pending_initial_commit: false,
                 blur_surface,
                 corner_radius,
             },

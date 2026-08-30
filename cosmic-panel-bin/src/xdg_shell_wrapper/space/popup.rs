@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
+use cctk::wayland_client::protocol::wl_seat::WlSeat;
 use cctk::wayland_client::protocol::wl_surface::WlSurface;
 use cosmic_protocols::corner_radius::v1::client::cosmic_corner_radius_toplevel_v1::CosmicCornerRadiusToplevelV1;
 use sctk::compositor::Region;
@@ -94,6 +95,34 @@ pub struct PanelPopup {
     pub parent: WlSurface,
     /// has a grab
     pub grab: bool,
+    /// `c_popup` has not been committed yet, so it is not mapped and may still
+    /// be grabbed. See [`PanelPopup::map`].
+    pub pending_initial_commit: bool,
+}
+
+impl PanelPopup {
+    /// Commit the popup we created in the compositor, mapping it.
+    ///
+    /// For a popup proxied from an embedded client this is deferred until that
+    /// client commits its own popup surface, because `xdg_popup.grab` is only
+    /// valid before the popup is mapped and smithay reports the client's `grab`
+    /// request from the pre-commit hook of that first commit. Mapping any earlier
+    /// turns every forwarded grab into an `invalid_grab` protocol error.
+    pub fn map(&mut self) {
+        if self.pending_initial_commit {
+            self.pending_initial_commit = false;
+            self.c_popup.wl_surface().commit();
+        }
+    }
+
+    /// Forward an `xdg_popup.grab` request from the embedded client.
+    pub fn forward_grab(&self, seat: &WlSeat, serial: u32) {
+        if self.pending_initial_commit {
+            self.c_popup.xdg_popup().grab(seat, serial);
+        } else {
+            tracing::warn!("Ignoring `grab` request for a popup that is already mapped");
+        }
+    }
 }
 
 impl WrapperPopup {

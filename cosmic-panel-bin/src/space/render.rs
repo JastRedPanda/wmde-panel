@@ -322,6 +322,7 @@ impl PanelSpace {
                 && p.s_surface.alive()
                 && p.popup.c_popup.wl_surface().is_alive()
                 && p.popup.has_frame
+                && !p.popup.pending_initial_commit
         }) {
             if let Err(err) = unsafe {
                 renderer

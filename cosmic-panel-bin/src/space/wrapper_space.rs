@@ -291,9 +291,6 @@ impl WrapperSpace for PanelSpace {
             c_wl_surface.set_buffer_scale(self.scale as i32);
         }
 
-        // must be done after role is assigned as popup
-        c_wl_surface.commit();
-
         let cur_popup_state = Some(WrapperPopupState::WaitConfigure);
         tracing::info!("adding popup to popups");
         self.popups.push(WrapperPopup {
@@ -319,6 +316,7 @@ impl WrapperSpace for PanelSpace {
                     .map(|p| p.wl_surface().clone())
                     .unwrap_or(self.layer.as_ref().unwrap().wl_surface().clone()),
                 grab: true,
+                pending_initial_commit: true,
                 blur_surface: None,
                 corner_radius: None,
             },
@@ -335,7 +333,7 @@ impl WrapperSpace for PanelSpace {
         serial: u32,
     ) -> anyhow::Result<()> {
         if let Some(p) = self.popups.iter().find(|wp| wp.s_surface == popup) {
-            p.popup.c_popup.xdg_popup().grab(&seat, serial);
+            p.popup.forward_grab(&seat, serial);
         }
         Ok(())
     }
@@ -866,6 +864,10 @@ impl WrapperSpace for PanelSpace {
         self.space.refresh();
 
         if let Some(p) = self.popups.iter_mut().find(|p| p.s_surface.wl_surface() == s) {
+            // the client is done setting up its popup, and any `grab` it requested has
+            // been forwarded from the pre-commit hook that runs before this
+            p.popup.map();
+
             let p_bbox = bbox_from_surface_tree(p.s_surface.wl_surface(), (0, 0));
             if p_bbox.size == p.popup.rectangle.size {
                 p.popup.dirty = true;
