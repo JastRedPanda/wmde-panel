@@ -1,11 +1,10 @@
 use std::os::fd::AsFd;
 
-use crate::xdg_shell_wrapper::client_state::FocusStatus;
 use crate::xdg_shell_wrapper::shared_state::GlobalState;
 use sctk::data_device_manager::data_source::DataSourceHandler;
 use sctk::reexports::client::protocol::wl_data_device_manager::DndAction as ClientDndAction;
 use sctk::reexports::client::protocol::wl_data_source::WlDataSource;
-use sctk::seat::pointer::{PointerEvent, PointerEventKind, PointerHandler};
+use smithay::backend::input::InputTime;
 use smithay::reexports::wayland_server::protocol::wl_data_device_manager::DndAction;
 use smithay::utils::SERIAL_COUNTER;
 use smithay::wayland::selection::data_device::request_data_device_client_selection;
@@ -94,7 +93,7 @@ impl DataSourceHandler for GlobalState {
             seat.server.seat.get_pointer().unwrap().unset_grab(
                 self,
                 SERIAL_COUNTER.next_serial(),
-                0,
+                InputTime::now(),
             );
         }
     }
@@ -140,7 +139,7 @@ impl DataSourceHandler for GlobalState {
             seat.server.seat.get_pointer().unwrap().unset_grab(
                 self,
                 SERIAL_COUNTER.next_serial(),
-                0,
+                InputTime::now(),
             );
         }
     }

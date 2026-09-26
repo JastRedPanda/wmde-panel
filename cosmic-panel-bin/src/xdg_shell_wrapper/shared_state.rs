@@ -16,7 +16,6 @@ use smithay::backend::renderer::{Bind, ImportDma, ImportEgl};
 use smithay::desktop::utils::send_frames_surface_tree;
 use smithay::input::keyboard::FilterResult;
 use smithay::reexports::wayland_server::DisplayHandle;
-use smithay::reexports::wayland_server::protocol::wl_surface;
 use smithay::utils::SERIAL_COUNTER;
 use smithay::wayland::compositor::with_states;
 use smithay::wayland::dmabuf::DmabufState;
@@ -43,6 +42,8 @@ pub struct GlobalState {
     pub iter_count: u128,
 }
 
+smithay::delegate_dispatch2!(GlobalState);
+
 impl GlobalState {
     pub(crate) fn new(
         client_state: ClientState,
@@ -58,8 +59,8 @@ impl GlobalState {
         self.server_state.popup_manager.cleanup();
 
         // handle funky keyboard state.
-        // if a client layer shell surface is closed, then it won't receive the release
-        // event then the client will keep receiving input
+        // if a client layer shell surface is closed, then it won't receive the
+        // release event then the client will keep receiving input
         // so we send the release here instead
         let press = if let Some((key_pressed, kbd)) = self
             .client_state
@@ -87,7 +88,7 @@ impl GlobalState {
                 key_pressed.1.0.into(),
                 KeyState::Released,
                 SERIAL_COUNTER.next_serial(),
-                key_pressed.1.1.wrapping_add(1),
+                key_pressed.1.1,
                 move |_, _modifiers, _keysym| FilterResult::Forward,
             );
         }
@@ -198,8 +199,8 @@ impl GlobalState {
             _ = output_tracker.render_output(renderer, &mut f, age, &elements, *clear_color);
             drop(f);
             egl_surface.swap_buffers(None).unwrap();
-            // FIXME: damage tracking issues on integrated graphics but not nvidia
-            // self.egl_surface
+            // FIXME: damage tracking issues on integrated graphics but not
+            // nvidia self.egl_surface
             //     .as_ref()
             //     .unwrap()
             //     .swap_buffers(res.0.as_deref_mut())?;

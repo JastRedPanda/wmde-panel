@@ -7,7 +7,7 @@ use crate::xdg_shell_wrapper::space::WrapperSpace;
 use sctk::delegate_pointer;
 use sctk::seat::pointer::{PointerEvent, PointerHandler};
 use sctk::shell::WaylandSurface;
-use smithay::backend::input::{self, Axis, ButtonState};
+use smithay::backend::input::{self, Axis, ButtonState, InputTime};
 use smithay::input::pointer::{AxisFrame, ButtonEvent, MotionEvent};
 use smithay::reexports::wayland_server::protocol::wl_pointer::AxisSource;
 use smithay::utils::{Point, SERIAL_COUNTER};
@@ -36,18 +36,18 @@ impl GlobalState {
                     *serial = SERIAL_COUNTER.next_serial().into();
                 },
                 sctk::seat::pointer::PointerEventKind::Motion { time } => {
-                    *time = self.start_time.elapsed().as_millis().try_into().unwrap();
+                    *time = InputTime::now().millis();
                 },
                 sctk::seat::pointer::PointerEventKind::Press { time, serial, .. } => {
-                    *time = self.start_time.elapsed().as_millis().try_into().unwrap();
+                    *time = InputTime::now().millis();
                     *serial = SERIAL_COUNTER.next_serial().into();
                 },
                 sctk::seat::pointer::PointerEventKind::Release { time, serial, .. } => {
-                    *time = self.start_time.elapsed().as_millis().try_into().unwrap();
+                    *time = InputTime::now().millis();
                     *serial = SERIAL_COUNTER.next_serial().into();
                 },
                 sctk::seat::pointer::PointerEventKind::Axis { time, .. } => {
-                    *time = self.start_time.elapsed().as_millis().try_into().unwrap();
+                    *time = InputTime::now().millis();
                 },
             }
         }
@@ -59,9 +59,6 @@ impl GlobalState {
         pointer: &sctk::reexports::client::protocol::wl_pointer::WlPointer,
         events: &[sctk::seat::pointer::PointerEvent],
     ) {
-        let start_time = self.start_time;
-        let time = start_time.elapsed().as_millis();
-
         let seat_index = self
             .server_state
             .seats
@@ -83,7 +80,7 @@ impl GlobalState {
                         &MotionEvent {
                             location: (0.0, 0.0).into(),
                             serial: SERIAL_COUNTER.next_serial(),
-                            time: time.try_into().unwrap(),
+                            time: InputTime::now(),
                         },
                     );
                     ptr.frame(self);
@@ -138,7 +135,7 @@ impl GlobalState {
                             &MotionEvent {
                                 location: Point::from((surface_x, surface_y)),
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time: time.try_into().unwrap(),
+                                time: InputTime::now(),
                             },
                         );
                         ptr.frame(self);
@@ -165,7 +162,7 @@ impl GlobalState {
                                 &MotionEvent {
                                     location: c_pos.to_f64() + Point::from((surface_x, surface_y)),
                                     serial: SERIAL_COUNTER.next_serial(),
-                                    time: time.try_into().unwrap(),
+                                    time: InputTime::now(),
                                 },
                             );
                             ptr.frame(self);
@@ -177,7 +174,7 @@ impl GlobalState {
                             &MotionEvent {
                                 location: Point::from((surface_x, surface_y)),
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time: time.try_into().unwrap(),
+                                time: InputTime::now(),
                             },
                         );
                         ptr.frame(self);
@@ -215,7 +212,7 @@ impl GlobalState {
                             &MotionEvent {
                                 location: Point::from((surface_x, surface_y)),
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time,
+                                time: InputTime::from_millis(time),
                             },
                         );
                         ptr.frame(self);
@@ -241,7 +238,7 @@ impl GlobalState {
                                 &MotionEvent {
                                     location: c_pos.to_f64() + Point::from((surface_x, surface_y)),
                                     serial: SERIAL_COUNTER.next_serial(),
-                                    time,
+                                    time: InputTime::from_millis(time),
                                 },
                             );
                             ptr.frame(self);
@@ -253,7 +250,7 @@ impl GlobalState {
                             &MotionEvent {
                                 location: Point::from((surface_x, surface_y)),
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time,
+                                time: InputTime::from_millis(time),
                             },
                         );
                         ptr.frame(self);
@@ -285,7 +282,7 @@ impl GlobalState {
                             self,
                             &ButtonEvent {
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time,
+                                time: InputTime::from_millis(time),
                                 button,
                                 state: ButtonState::Pressed,
                             },
@@ -302,7 +299,7 @@ impl GlobalState {
                         self,
                         &ButtonEvent {
                             serial: SERIAL_COUNTER.next_serial(),
-                            time,
+                            time: InputTime::from_millis(time),
                             button,
                             state: ButtonState::Pressed,
                         },
@@ -329,7 +326,7 @@ impl GlobalState {
                             self,
                             &ButtonEvent {
                                 serial: SERIAL_COUNTER.next_serial(),
-                                time,
+                                time: InputTime::from_millis(time),
                                 button,
                                 state: ButtonState::Released,
                             },
@@ -346,7 +343,7 @@ impl GlobalState {
                         self,
                         &ButtonEvent {
                             serial: SERIAL_COUNTER.next_serial(),
-                            time,
+                            time: InputTime::from_millis(time),
                             button,
                             state: ButtonState::Released,
                         },
@@ -372,7 +369,7 @@ impl GlobalState {
                         _ => continue,
                     };
 
-                    let mut af = AxisFrame::new(time).source(source);
+                    let mut af = AxisFrame::new(InputTime::from_millis(time)).source(source);
 
                     if !horizontal.is_none() {
                         if horizontal.value120 != 0 {

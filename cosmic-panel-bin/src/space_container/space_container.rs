@@ -13,7 +13,6 @@ use crate::xdg_shell_wrapper::shared_state::GlobalState;
 use crate::xdg_shell_wrapper::space::WrapperSpace;
 use crate::xdg_shell_wrapper::wp_fractional_scaling::FractionalScalingManager;
 use crate::xdg_shell_wrapper::wp_viewporter::ViewporterState;
-use cctk::cosmic_protocols::corner_radius;
 use cctk::cosmic_protocols::corner_radius::v1::client::cosmic_corner_radius_manager_v1::CosmicCornerRadiusManagerV1;
 use cctk::toplevel_info::ToplevelInfo;
 use cctk::wayland_client::protocol::wl_seat::WlSeat;
@@ -257,9 +256,10 @@ impl SpaceContainer {
         force_output: Option<WlOutput>,
         _overlap_notify: Option<OverlapNotifyV1>,
     ) {
-        // if the output is set to "all", we need to check if the config is the same for
-        // all outputs if the output is set to a specific output, we need to
-        // make sure it doesn't exist on another output
+        // if the output is set to "all", we need to check if the config is the
+        // same for all outputs if the output is set to a specific
+        // output, we need to make sure it doesn't exist on another
+        // output
         let mut output_count = if matches!(entry.output, CosmicPanelOuput::All) {
             self.outputs.len()
         } else {
@@ -323,8 +323,8 @@ impl SpaceContainer {
             })
         };
         // recreate the original if: output changed
-        // or if the output is the same, but the priority changes to conflict with an
-        // adjacent panel or if applet size changes
+        // or if the output is the same, but the priority changes to conflict
+        // with an adjacent panel or if applet size changes
         let must_recreate =
         // implies that there is at least one output which needs to be recreated
         output_count_mismatch
@@ -335,6 +335,8 @@ impl SpaceContainer {
             || (c.name == entry.name && c.spacing != entry.spacing)
             // size overrides changed
             || (c.name == entry.name && (c.size_center != entry.size_center || c.size_wings != entry.size_wings))
+            // border width changed
+            || (c.name == entry.name && c.border_width != entry.border_width)
             // output changed
             || (entry.output != CosmicPanelOuput::All &&
             (c.name == entry.name && c.output != entry.output))

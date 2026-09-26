@@ -14,7 +14,6 @@ use smithay::wayland::buffer::BufferHandler;
 use smithay::wayland::compositor::{CompositorHandler, CompositorState, get_role};
 use smithay::wayland::shell::wlr_layer::{ExclusiveZone, Layer};
 use smithay::wayland::shm::{ShmHandler, ShmState};
-use smithay::{delegate_compositor, delegate_shm};
 use tracing::{error, trace};
 use wayland_egl::WlEglSurface;
 
@@ -63,9 +62,9 @@ impl CompositorHandler for GlobalState {
                     self.client_state.pending_layer_surfaces.swap_remove(pos);
                 // layer created by client
                 // request received here
-                // layer created in compositor & tracked by xdg-shell-wrapper in its own space
-                // that spans all outputs get renderer from wrapper space and
-                // draw to it
+                // layer created in compositor & tracked by xdg-shell-wrapper in
+                // its own space that spans all outputs get
+                // renderer from wrapper space and draw to it
                 let renderer = match self.space.renderer() {
                     Some(r) => r,
                     None => return,
@@ -347,6 +346,3 @@ impl ShmHandler for GlobalState {
         &self.server_state.shm_state
     }
 }
-
-delegate_compositor!(GlobalState);
-delegate_shm!(GlobalState);

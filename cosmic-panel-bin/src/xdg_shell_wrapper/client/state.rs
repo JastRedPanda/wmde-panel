@@ -14,7 +14,7 @@ use cosmic_protocols::corner_radius::v1::client::cosmic_corner_radius_layer_v1::
 use sctk::compositor::CompositorState;
 use sctk::data_device_manager::DataDeviceManagerState;
 use sctk::data_device_manager::data_device::DataDevice;
-use sctk::data_device_manager::data_offer::{DragOffer, SelectionOffer};
+use sctk::data_device_manager::data_offer::SelectionOffer;
 use sctk::data_device_manager::data_source::{CopyPasteSource, DragSource};
 use sctk::output::OutputState;
 use sctk::reexports::calloop_wayland_source::WaylandSource;
@@ -33,6 +33,7 @@ use sctk::shm::Shm;
 use sctk::shm::multi::MultiPool;
 use sctk::subcompositor::SubcompositorState;
 use smithay::backend::egl::EGLSurface;
+use smithay::backend::input::InputTime;
 use smithay::backend::renderer::Bind;
 use smithay::backend::renderer::damage::OutputDamageTracker;
 use smithay::backend::renderer::element::AsRenderElements;
@@ -165,7 +166,7 @@ pub struct ClientState {
     pub(crate) cursor_scale: Option<WpFractionalScaleV1>,
     pub(crate) cursor_vp: Option<WpViewport>,
     pub(crate) multipool: Option<MultiPool<(WlSurface, usize)>>,
-    pub(crate) last_key_pressed: Vec<(String, (u32, u32), wl_surface::WlSurface)>,
+    pub(crate) last_key_pressed: Vec<(String, (u32, InputTime), wl_surface::WlSurface)>,
     pub(crate) outputs: Vec<(WlOutput, Output, GlobalId)>,
     pub(crate) touch_surfaces: HashMap<i32, WlSurface>,
     pub(crate) blur_enabled: bool,
@@ -368,8 +369,8 @@ impl ClientState {
                 .unwrap();
             drop(f);
             egl_surface.swap_buffers(None).unwrap();
-            // FIXME: damage tracking issues on integrated graphics but not nvidia
-            // self.egl_surface
+            // FIXME: damage tracking issues on integrated graphics but not
+            // nvidia self.egl_surface
             //     .as_ref()
             //     .unwrap()
             //     .swap_buffers(res.0.as_deref_mut())?;

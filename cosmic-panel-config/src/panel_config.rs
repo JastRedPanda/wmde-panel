@@ -499,6 +499,9 @@ pub struct CosmicPanelConfig {
     /// space between panel plugins
     pub spacing: u32,
     pub border_radius: u32,
+    /// width of the outline drawn around the panel, 0.0 to disable
+    #[serde(default)]
+    pub border_width: f32,
     // TODO autohide & exclusive zone should not be able to both be enabled at once
     /// exclusive zone
     pub exclusive_zone: bool,
@@ -542,6 +545,7 @@ impl PartialEq for CosmicPanelConfig {
             && self.padding == other.padding
             && self.spacing == other.spacing
             && self.border_radius == other.border_radius
+            && self.border_width == other.border_width
             && self.exclusive_zone == other.exclusive_zone
             && self.autohide == other.autohide
             && self.margin == other.margin
@@ -576,6 +580,7 @@ impl Default for CosmicPanelConfig {
             autohide: AutoHide::default(),
             autohide_behavior: AutoHideBehavior::default(),
             border_radius: 8,
+            border_width: 0.0,
             margin: 4,
             opacity: 0.8,
             autohover_delay_ms: Some(500),
@@ -825,6 +830,7 @@ impl CosmicPanelConfig {
         self.expand_to_edges = true;
         self.margin = 0;
         self.border_radius = 0;
+        self.border_width = 0.0;
         self.anchor_gap = false;
     }
 }

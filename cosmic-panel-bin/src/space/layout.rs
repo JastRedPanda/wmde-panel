@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use crate::iced::IcedElement;
-use crate::iced::elements::background::background_element;
+use crate::iced::elements::background::{PanelBorder, background_element};
 use crate::iced::elements::overflow_button::{
     self, OverflowButton, OverflowButtonElement, overflow_button_element,
 };
@@ -246,7 +246,8 @@ impl PanelSpace {
         let spacing_u32 = self.config.spacing();
         let spacing_scaled = spacing_u32 as f64 * self.scale;
         // First try partitioning the panel evenly into N spaces.
-        // If all windows fit into each space, then set their offsets and return.
+        // If all windows fit into each space, then set their offsets and
+        // return.
         let (list_cross, layer_major) = match anchor {
             PanelAnchor::Left | PanelAnchor::Right => (self.dimensions.w, self.dimensions.h),
             PanelAnchor::Top | PanelAnchor::Bottom => (self.dimensions.h, self.dimensions.w),
@@ -640,8 +641,8 @@ impl PanelSpace {
             layer_major.saturating_sub(container_length) < 2 * self.logical_layer_start_overlap;
         let is_overlapping_end =
             layer_major.saturating_sub(container_length) < 2 * self.logical_layer_end_overlap;
-        // XXX this is a bit of a hack around the fact that we want the spacer to be
-        // placed before the overflow button
+        // XXX this is a bit of a hack around the fact that we want the spacer
+        // to be placed before the overflow button
         if windows_left.is_empty() && !windows_center.is_empty() && is_overlapping_start {
             let (_, CosmicMappedInternal::Spacer(s), ..) = windows_center.remove(0) else {
                 panic!("No spacer found");
@@ -856,12 +857,24 @@ impl PanelSpace {
             (PanelAnchor::Top, 0) => [0., 0., border_radius, border_radius],
             _ => [border_radius, border_radius, border_radius, border_radius],
         };
+        // a panel flush on 3 sides (a normal panel) only shows its inner edge
+        let border = if self.config.border_width <= 0. {
+            PanelBorder::None
+        } else if self.config.expand_to_edges()
+            && self.gap() == 0
+            && !self.config.autohide_enabled()
+        {
+            PanelBorder::Side(self.config.anchor)
+        } else {
+            PanelBorder::Full
+        };
         if !self.background_element.as_ref().is_some_and(|e| {
             e.with_program(|p| {
                 p.logical_height == h
                     && p.logical_width == w
                     && self.bg_color() == p.color
                     && p.scale == self.scale
+                    && p.border == border
             })
         }) || self.animate_state.as_ref().is_some()
             || self.transitioning
@@ -934,6 +947,8 @@ impl PanelSpace {
                 loc,
                 self.bg_color(),
                 self.scale,
+                border,
+                self.config.border_width,
             );
             bg.output_enter(&output, Rectangle::default());
             self.background_element = Some(bg.clone());
@@ -997,7 +1012,8 @@ impl PanelSpace {
                     if self.config.is_horizontal() {
                         size.0 -= self.logical_layer_end_overlap - container_lengthwise_pos;
                     } else {
-                        // loc.1 -= self.logical_layer_end_overlap - container_lengthwise_pos;
+                        // loc.1 -= self.logical_layer_end_overlap -
+                        // container_lengthwise_pos;
                         size.1 -= self.logical_layer_end_overlap - container_lengthwise_pos;
                     }
                 }
@@ -1224,8 +1240,8 @@ impl PanelSpace {
                 let p = weighted_priority(&w);
                 overflow_partition.movable.push((w.0, p));
             } else {
-                // make shrinkable if no shrink priority with lowest priority so it is moved
-                // last
+                // make shrinkable if no shrink priority with lowest priority so
+                // it is moved last
                 overflow_partition.shrinkable.push(ShrinkableClient {
                     window: w.0,
                     priority: -1,
