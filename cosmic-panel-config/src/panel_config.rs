@@ -525,6 +525,14 @@ pub struct CosmicPanelConfig {
     /// Absent in configs written before the key existed, hence the default.
     #[serde(default)]
     pub look: PanelLook,
+    /// WMDE: drop a shadow under the panel, drawn by the compositor as for windows and
+    /// faded by `opacity`. Absent in older configs, hence the default.
+    #[serde(default = "default_shadow")]
+    pub shadow: bool,
+}
+
+fn default_shadow() -> bool {
+    true
 }
 
 impl PartialEq for CosmicPanelConfig {
@@ -554,6 +562,7 @@ impl PartialEq for CosmicPanelConfig {
             && (self.opacity - other.opacity).abs() < 0.01
             && self.keep_style_on_maximize == other.keep_style_on_maximize
             && self.look == other.look
+            && self.shadow == other.shadow
     }
 }
 
@@ -587,6 +596,7 @@ impl Default for CosmicPanelConfig {
             padding_overlap: 0.5,
             keep_style_on_maximize: false,
             look: PanelLook::default(),
+            shadow: default_shadow(),
         }
     }
 }
